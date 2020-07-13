@@ -28,8 +28,7 @@ function get_data()
 
 function get_data()
 {
-	// Need brackets on the library insantiation
-    $database = new database_connection_script_library();
+    $database = new database_connection_script_library;
 
     // Missing arrow on method call
     // curly bracket used instead of normal bracket
