@@ -1,62 +1,65 @@
 <?php
 function export_products_to_file()
 {
+    // Import carbon for file name timestamping.
+    $carbon = new Carbon();
+
     $database = new database_connection_script_library;
 
-    $product_details = $database->get_products(ALL);
+    // get_products method needs a string.
+    $product_details = $database->get_products('all');
 
-    $number_of_products = sizeof($product_details);
 
-    $product_data = array();
-    for($counter=0; $counter < $number_of_products; $counter++)
-    {
-        $product_details = $database->get_products($counter);
+    // Instantiate an array with []
+    $product_data = [];
 
-        $product_id = $product_details["product_id"];
-        $product_name = $product_details["product_name"];
-        $product_price = $product_details["product_price"];
-
-        $product_data[] = array($product_id, $product_name, $product_price);
+    $count = 0;
+    foreach ($product_details as $product) {
+        // add the product to an array.
+        $product_data[] = [
+            'product_id' => $product['product_id'],
+            'product_name' => $product['product_name'],
+            'product_price' => $product['product_price'],
+        ];
+        $count++;
     }
 
-    $product_insert_count=0;
-    foreach($product_data as $product)
-    {
-        $myfile = fopen("myfile.csv", "a+");
+    // Generate file name with current date/time stamp.
+    $filename = 'export-' . $carbon->now()->toDateTimeString();
 
-        $file_data = array();
-        $file_data[0] = $product[0];
-        $file_data[1] = $product[1];
-        $file_data[2] = $product[2];
+    // Open the new file
+    $file = fopen($filename, 'a+');
 
-        fputcsv($myfile, $file_data);
+    // add the array data to the csv file.
+    fputcsv($file, $product_data);
 
-        fclose($myfile);
-
-        $product_insert_count++;
-    }
-
-    return $product_insert_count;
+    return $count;
 }
 
 class database_connection_script_library
 {
+    private $conn;
+
+    public function __construct()
+    {
+        // Modernize data connection method and set everything up in the constructor.
+        $this->conn = new mysqli('external-domain-2.com', 'admin', 'admin', 'product');
+    }
+
     function get_products($reference)
     {
         $query = "SELECT product_id, product_name, product_price "
             ."FROM product ";
 
-        if($reference != ALL)
+        if($reference != 'all')
         {
             $query .= "WHERE product_id = {$reference} ";
         }
 
-        mysql_connect("127.0.0.1", "admin", "admin");
-        mysql_select_db("product_data");
-        $result = mysql_query($query);
+        // mysqli syntax
+        $result = $this->conn->query($query);
 
-
-        return resultset_to_array($result);
+        return mysqli_fetch_array($result);
     }
 }
 
