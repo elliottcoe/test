@@ -39,7 +39,9 @@ $conn = new mysqli('external-domain-2.com', 'admin', 'admin', 'product');
 
 $number_of_products = 50;
 
-$product_feed = fgetcsv("http://www.external-domain.com/product_feed.csv");
+$handle = fgetcsv('http://www.external-domain.com/product_feed.csv', 'r');
+
+$product_feed = fgetcsv($handle);
 
 $product_price_feed = new price_feed_web_service;
 $product_price_feed->get_prices();
@@ -51,18 +53,24 @@ foreach ($product_feed as $product) {
     // Check product limit
     if (!$count < 50) {
         // Do insert
-        $product_id = $product['Product Id'];
-        $product_price = $product_price_feed[$product_id];
-        $product_name = $product['Product Name'];
+        if ($product['Product Id'] && $product['Product Name']) {
+            $product_id = $product['Product Id'];
+            $product_price = $product_price_feed[$product_id];
+            $product_name = $product['Product Name'];
 
 
-        $sql = "INSERT INTO product_price_data (product_id, product_name, price)
+            $sql = "INSERT INTO product_price_data (product_id, product_name, price)
         VALUES ($product_id, $product_name, $product_price)";
 
-        if ($conn->query($sql) === TRUE) {
-            echo 'added new row';
-        } else {
-            error_log('failed to add row for ' . $product_name . ', ' . $product_id);
+            // Doing a query per row to insert every product, means products are still added if one of the products in the feed is wrong.
+            if ($conn->query($sql) === TRUE) {
+                echo 'added new row';
+            } else {
+                error_log('failed to add row for ' . $product_name . ', ' . $product_id);
+            }
+        }
+        else {
+            error_log('failed to add row, parameter missing');
         }
     }
     else {

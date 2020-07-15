@@ -14,15 +14,6 @@ function export_products_to_file()
     $product_data = [];
 
     $count = 0;
-    foreach ($product_details as $product) {
-        // add the product to an array.
-        $product_data[] = [
-            'product_id' => $product['product_id'],
-            'product_name' => $product['product_name'],
-            'product_price' => $product['product_price'],
-        ];
-        $count++;
-    }
 
     // Generate file name with current date/time stamp.
     $filename = 'export-' . $carbon->now()->toDateTimeString();
@@ -30,8 +21,21 @@ function export_products_to_file()
     // Open the new file
     $file = fopen($filename, 'a+');
 
-    // add the array data to the csv file.
-    fputcsv($file, $product_data);
+    foreach ($product_details as $product) {
+        // add the product to an array.
+        $product_item = [
+            'product_id' => $product['product_id'],
+            'product_name' => $product['product_name'],
+            'product_price' => $product['product_price'],
+        ];
+        $count++;
+
+        // add the array data to the csv file.
+        fputcsv($file, $product_item);
+    }
+
+
+    fclose($file);
 
     return $count;
 }
